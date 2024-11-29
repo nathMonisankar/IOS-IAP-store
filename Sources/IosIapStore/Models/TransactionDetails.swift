@@ -8,12 +8,12 @@
 import Foundation
 
 struct TransactionDetails: Codable {
-    let userEmailId: String
+    let userId: String
     let bundleId: String
-    let currency: String
+//    let currency: String
     let deviceVerification: String
     let deviceVerificationNonce: String
-    let environment: String
+//    let environment: String
     let expiresDate: TimeInterval
     let inAppOwnershipType: String
     let isUpgraded: Bool
@@ -24,11 +24,11 @@ struct TransactionDetails: Codable {
     let purchaseDate: TimeInterval
     let quantity: Int
     let signedDate: TimeInterval
-    let storefront: String
-    let storefrontId: String
+//    let storefront: String
+//    let storefrontId: String
 //    let subscriptionGroupIdentifier: String
     let transactionId: String
-    let transactionReason: String
+//    let transactionReason: String
     let type: String
     let webOrderLineItemId: String
 }

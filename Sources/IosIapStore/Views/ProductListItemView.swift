@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct ProductListItemView: View {
-    @EnvironmentObject var store: MyStore
+    @EnvironmentObject var store: RootStore
     
     var product: SubscriptionPlan
     var isSelected: Bool {
@@ -20,17 +20,48 @@ struct ProductListItemView: View {
     
     var body: some View {
         HStack{
-            VStack(spacing: 10) {
+            VStack(alignment: .leading, spacing: 10) {
                 Text(product.name)
+                    .font(.title2)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.primary)
+
                 Text(product.description)
+                    .font(.body)
+                    .foregroundColor(.primary)
+
+                Text(product.priceFormatted)
+                    .font(.title3)
+                    .fontWeight(.medium)
+                    .foregroundColor(.blue)
+                        
+                if let discount = product.discounts.first(where: { $0.modeType == .freeTrial }) {
+                    Text("Intro Offer: \(discount.priceFormatted) for \(discount.recurringSubscriptionPeriod.displayText)")
+                        .font(.callout)
+                        .foregroundColor(.accentColor)
+                }
+                        
+                if store.isProductPurchased(with: product.productId) {
+                    Text("⭐️ Your current plan")
+                        .font(.footnote)
+                        .foregroundColor(.blue)
+                }
             }
             
             Spacer()
             radioButton
         }
         .padding()
-        .background(Color.gray.opacity(0.4))
-        .cornerRadius(10)
+        .background(
+            isSelected
+            ? LinearGradient(gradient: Gradient(colors: [.mint, .cyan]), startPoint: .topLeading, endPoint: .bottomTrailing)
+            : LinearGradient(gradient: Gradient(colors: [Color.gray.opacity(0.2), Color.gray.opacity(0.3)]), startPoint: .topLeading, endPoint: .bottomTrailing)
+        )
+        .cornerRadius(12)
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(isSelected ? Color.blue : Color.gray.opacity(0.5), lineWidth: 1)
+        )
     }
 }
 

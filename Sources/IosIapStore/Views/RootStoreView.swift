@@ -9,14 +9,17 @@ import SwiftUI
 
 public struct RootStoreView: View {
     private let apiKey: String
-    @StateObject private var store: MyStore
+    @StateObject private var store: RootStore
+    
     public init(
         userId: String,
         apiKey: String
     ) {
         self.apiKey = apiKey
-        _store = StateObject(wrappedValue: MyStore(userId: userId))
+        _store = StateObject(wrappedValue: RootStore(userId: userId, apiKey: apiKey))
+        
     }
+    
     public var body: some View {
         VStack {
             StoreContent()
@@ -27,12 +30,14 @@ public struct RootStoreView: View {
             } else {
                 Text("No Products available at this time!")
             }
+            PurchaseButtonView()
         }
         .environmentObject(store)
         .onAppear {
             Task{ @MainActor in
                 await store.fetchSubscriptionPlans(apiKey: apiKey)
                 await store.fetchStoreProducts()
+                await store.updateCustomerProductStatus()
             }
         }
         .padding()

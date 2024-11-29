@@ -51,6 +51,19 @@ enum RecurringSubscriptionPeriod: String, Codable {
             return "1 Week"
         }
     }
+    
+    var recurringText: String {
+        switch self {
+        case .threeDays:
+            return " in 3 Days"
+        case .oneYear:
+            return "/year"
+        case .oneMonth:
+            return "/month"
+        case .oneWeek:
+            return "/week"
+        }
+    }
 }
 
 enum ModeType: String, Codable {

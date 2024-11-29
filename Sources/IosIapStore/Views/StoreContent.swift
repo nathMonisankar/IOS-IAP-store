@@ -9,7 +9,7 @@ import SwiftUI
 
 struct StoreContent: View {
     @AppStorage("subscribed") private var subscribed: Bool = false
-    @EnvironmentObject var store: MyStore
+    @EnvironmentObject var store: RootStore
     
     var body: some View {
         ZStack {

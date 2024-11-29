@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct ProductListView: View {
-    @EnvironmentObject var store: MyStore
+    @EnvironmentObject var store: RootStore
     var body: some View {
         ScrollView(.vertical, showsIndicators: false){
             VStack(spacing: 20) {
