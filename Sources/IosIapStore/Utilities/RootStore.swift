@@ -56,7 +56,6 @@ class RootStore: ObservableObject {
     func fetchSubscriptionPlans(apiKey: String) async {
         do {
             self.apiSubscriptionPlans = try await subscriptionPlanService.loadSubscriptionPlans(apiKey: apiKey)
-            self.isLoading = false
         } catch {
             self.errorMessage = "Failed to load subscription plans: \(error.localizedDescription)"
             self.isLoading = false
@@ -72,6 +71,7 @@ class RootStore: ObservableObject {
         do {
             let sk2Products = try await sk2Store.fetchProductsFromAppStore(for: productIds)
             storeProducts = sk2Products
+            self.isLoading = false
         } catch {
             let errMsg = "Failed to fetch App Store products: \(error.localizedDescription)"
             errorMessage = errMsg

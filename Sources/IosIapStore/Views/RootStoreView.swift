@@ -9,6 +9,7 @@ import SwiftUI
 
 public struct RootStoreView: View {
     private let apiKey: String
+    @State private var showToast: Bool = false
     @StateObject private var store: RootStore
     
     public init(
@@ -19,8 +20,49 @@ public struct RootStoreView: View {
         _store = StateObject(wrappedValue: RootStore(userId: userId, apiKey: apiKey))
         
     }
+    private func showToastForLimitedTime() {
+        withAnimation {
+            showToast = true
+        }
+
+        Task {
+            try await Task.sleep(nanoseconds: 3 * 1_000_000_000) // 3 seconds
+            withAnimation {
+                showToast = false
+            }
+            store.errorMessage = nil
+        }
+    }
     
     public var body: some View {
+        ZStack {
+            paymentContent
+            errorToast
+        }
+        .onChange(of: store.errorMessage) { newValue in
+            if newValue != nil {
+                showToastForLimitedTime()
+            }
+        }
+    }
+}
+
+extension RootStoreView {
+    private var errorToast: some View {
+        Group {
+            if showToast, let message = store.errorMessage {
+                VStack {
+                    Spacer()
+                    ToastView(message: message)
+                        .padding(.bottom, 50)
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                        .zIndex(1)
+                }
+            }
+        }
+    }
+    
+    private var paymentContent: some View {
         VStack {
             StoreContent()
             if store.isLoading {
@@ -42,6 +84,7 @@ public struct RootStoreView: View {
         }
         .padding()
     }
+    
 }
 
 
