@@ -12,7 +12,7 @@ struct ProductListView: View {
     var body: some View {
         ScrollView(.vertical, showsIndicators: false){
             VStack(spacing: 20) {
-                ForEach(store.availableProducts) { product in
+                ForEach(store.apiSubscriptionPlans) { product in
                     ProductListItemView(product: product)
                         .onTapGesture {
                             store.selectedProduct = product
