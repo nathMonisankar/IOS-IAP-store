@@ -23,6 +23,8 @@ class RootStore: ObservableObject {
     @Published private(set) var storeProducts: [Product] = []
     @Published var selectedProduct: SubscriptionPlan?
     @Published private(set) var purchasedSubscriptions: [Product] = []
+    @Published private(set) var availableProducts: [SubscriptionPlan] = []
+    @Published private(set) var productIds: [String] = []
     @Published private(set) var subscriptionGroupStatus: RenewalState?
     
     var updateListenerTask: Task<Void, Error>? = nil
@@ -32,16 +34,6 @@ class RootStore: ObservableObject {
     let subscriptionPlanService = SubscriptionPlanService();
     let userId: String
     let apiKey: String
-    
-    var productIds: [String] {
-        return apiSubscriptionPlans.map { $0.productId }
-    }
-    
-    var availableProducts: [SubscriptionPlan] {
-        return apiSubscriptionPlans.filter { plan in
-            storeProducts.contains { $0.id == plan.productId }
-        }
-    }
     
     init(userId: String, apiKey: String) {
         self.userId = userId
@@ -53,28 +45,47 @@ class RootStore: ObservableObject {
     }
     
     @MainActor
+    private func updateAvaiableProducts() {
+        availableProducts = apiSubscriptionPlans.filter { plan in
+            storeProducts.contains { $0.id == plan.productId }
+        }
+    }
+    @MainActor
+    private func updateProductIds() {
+        productIds = apiSubscriptionPlans.map { $0.productId };
+    }
+    
+    
+    @MainActor
     func fetchSubscriptionPlans(apiKey: String) async {
         do {
             self.apiSubscriptionPlans = try await subscriptionPlanService.loadSubscriptionPlans(apiKey: apiKey)
+            self.updateProductIds();
         } catch {
             self.errorMessage = "Failed to load subscription plans: \(error.localizedDescription)"
             self.isLoading = false
+            print("fetchSubscriptionPlans - \(error)")
         }
     }
     
     @MainActor
     func fetchStoreProducts() async {
         if(productIds.isEmpty) {
+            errorMessage = "No Products available."
+            self.isLoading = false
             return
         }
         
         do {
             let sk2Products = try await sk2Store.fetchProductsFromAppStore(for: productIds)
             storeProducts = sk2Products
+            self.updateAvaiableProducts();
             self.isLoading = false
         } catch {
             let errMsg = "Failed to fetch App Store products: \(error.localizedDescription)"
             errorMessage = errMsg
+            print("fetchStoreProducts - \(error)")
+            self.isLoading = false
         }
     }
     
