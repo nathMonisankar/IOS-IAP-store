@@ -12,14 +12,17 @@ struct SKProductStore {
     let subscriptionPlanService = SubscriptionPlanService();
 
     func fetchProductsFromAppStore(for productIds: [String]) async throws -> [Product] {
+        print("fetchProductsFromAppStore = \(productIds)")
         if(productIds.isEmpty) {
             throw StoreError.noProducts
         }
         do {
+            print("fetchProductsFromAppStore = start")
             let allStoreProducts = try await Product.products(for: productIds)
-            
+            print("fetchProductsFromAppStore = end")
             return sortByPrice(allStoreProducts)
         } catch {
+            print("fetchProductsFromAppStore error = \(error)")
             throw error;
         }
     }
