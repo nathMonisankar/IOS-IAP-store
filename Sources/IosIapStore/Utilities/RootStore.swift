@@ -60,6 +60,7 @@ class RootStore: ObservableObject {
     func fetchSubscriptionPlans(apiKey: String) async {
         do {
             self.apiSubscriptionPlans = try await subscriptionPlanService.loadSubscriptionPlans(apiKey: apiKey)
+            print("fetchSubscriptionPlans = \(apiSubscriptionPlans.count)")
             self.updateProductIds();
         } catch {
             self.errorMessage = "Failed to load subscription plans: \(error.localizedDescription)"
@@ -79,6 +80,7 @@ class RootStore: ObservableObject {
         do {
             let sk2Products = try await sk2Store.fetchProductsFromAppStore(for: productIds)
             storeProducts = sk2Products
+            print("fetchStoreProducts = \(sk2Products.count)")
             self.updateAvaiableProducts();
             self.isLoading = false
         } catch {
@@ -182,11 +184,12 @@ class RootStore: ObservableObject {
     }
     
     func listenForTransactions() -> Task<Void, Error> {
+        print("listenForTransactions")
         return Task.detached {
             for await result in Transaction.updates {
                 do {
                     let transaction = try result.payloadValue
-                    
+                    print("transaction details - \(transaction)")
 //                    await self.updateCustomerProductStatus()
                     
                     await transaction.finish()
