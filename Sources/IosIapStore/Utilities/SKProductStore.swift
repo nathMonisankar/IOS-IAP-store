@@ -19,7 +19,10 @@ struct SKProductStore {
         do {
             print("fetchProductsFromAppStore = start")
             let allStoreProducts = try await Product.products(for: productIds)
-            print("fetchProductsFromAppStore = end, \(allStoreProducts.count)")
+            if allStoreProducts.count == 0 {
+                throw StoreError.noProductsInStore
+            }
+            print("fetchProductsFromAppStore = end, \(allStoreProducts.count)=\(allStoreProducts)")
             print("fetchProductsFromAppStore sorted = end, \(sortByPrice(allStoreProducts).count)")
             return sortByPrice(allStoreProducts)
         } catch {

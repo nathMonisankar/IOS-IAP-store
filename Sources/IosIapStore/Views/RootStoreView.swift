@@ -67,7 +67,7 @@ extension RootStoreView {
             StoreContent()
             if store.isLoading {
                 ProgressView("Loading Plans...")
-            } else if store.apiSubscriptionPlans.count != 0 {
+            } else if store.availableProducts.count != 0 {
                 ProductListView()
             } else {
                 Text("No Products available at this time!")

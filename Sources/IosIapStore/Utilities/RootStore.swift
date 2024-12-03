@@ -9,6 +9,7 @@ public enum StoreError: Error {
     case noProducts
     case productRequestFailed
     case purchaseProductFailed
+    case noProductsInStore
 }
 
 typealias Transaction = StoreKit.Transaction
@@ -72,7 +73,7 @@ class RootStore: ObservableObject {
     @MainActor
     func fetchStoreProducts() async {
         if(productIds.isEmpty) {
-            errorMessage = "No Products available."
+            errorMessage = "No Products Ids available."
             self.isLoading = false
             return
         }
@@ -82,6 +83,10 @@ class RootStore: ObservableObject {
             storeProducts = sk2Products
             print("fetchStoreProducts = \(sk2Products.count)")
             self.updateAvaiableProducts();
+            self.isLoading = false
+        } catch StoreError.noProductsInStore {
+            let errMsg = "Got 0 products in App store."
+            errorMessage = errMsg
             self.isLoading = false
         } catch {
             let errMsg = "Failed to fetch App Store products: \(error.localizedDescription)"
