@@ -20,7 +20,7 @@
     "_applicationInternalID" : "6738417722",
     "_developerTeamID" : "3F25347H8E",
     "_failTransactionsEnabled" : false,
-    "_lastSynchronizedDate" : 754915625.07588303,
+    "_lastSynchronizedDate" : 754917310.89685202,
     "_locale" : "en_US",
     "_storefront" : "USA",
     "_storeKitErrors" : [
@@ -138,7 +138,7 @@
         {
           "adHocOffers" : [
             {
-              "internalID" : "F5394139",
+              "internalID" : "5F7FC73C",
               "numberOfPeriods" : 1,
               "offerID" : "iap_monthly_999_promo",
               "paymentMode" : "free",
