@@ -1,6 +1,6 @@
 # IOS In App Purchase SDK
 
-In App Purchase custom implementation using Storekit 1 and Storekit 2 for iOS 14+
+In App Purchase custom implementation using Storekit 2 for iOS 15+
 
 ## 🛠 Technologies
 
