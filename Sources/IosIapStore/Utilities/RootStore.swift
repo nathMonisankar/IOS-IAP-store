@@ -96,6 +96,65 @@ class RootStore: ObservableObject {
         }
     }
     
+//     func loadCertificate() -> Data? {
+//         let certificateName: String
+//         #if DEBUG
+//             certificateName = "StoreKitTestCertificate"
+//         #else
+//             certificateName = "AppleIncRootCertificate"
+//         #endif
+
+//         guard let certificatePath = Bundle.main.path(forResource: certificateName, ofType: "cer"),
+//               let certificateData = try? Data(contentsOf: URL(fileURLWithPath: certificatePath)) else {
+//             print("Certificate not found or cannot be loaded.")
+//             return nil
+//         }
+
+//         return certificateData
+//     }
+    
+//     func validateReceipt() {
+//         // Step 1: Load the receipt
+//         guard let receiptURL = Bundle.main.appStoreReceiptURL,
+//               let receiptData = try? Data(contentsOf: receiptURL) else {
+//             print("Receipt not available.")
+//             return
+//         }
+
+//         // Step 2: Load the certificate
+//         guard let certificateData = loadCertificate() else {
+//             print("Certificate not available.")
+//             return
+//         }
+
+//         // Step 3: Use the certificate to validate the receipt
+//         do {
+//             let receiptBase64 = receiptData.base64EncodedString()
+//             print("Receipt Base64: \(receiptBase64)")
+//             print("Certificate loaded for validation.")
+//             // Validation logic would typically involve sending the receipt and certificate to your server or validating locally
+// //            return receiptBase64
+//         } catch {
+//             print("Failed to validate receipt: \(error.localizedDescription)")
+//         }
+//     }
+    
+    func getReceipt() -> String {
+        if let appStoreReceiptURL = Bundle.main.appStoreReceiptURL,
+            FileManager.default.fileExists(atPath: appStoreReceiptURL.path) {
+            do {
+                let receiptData = try Data(contentsOf: appStoreReceiptURL, options: .alwaysMapped)
+                print(receiptData)
+                let receiptString = receiptData.base64EncodedString(options: [])
+                return receiptString
+            }
+            catch {
+                print("Couldn't read receipt data with error: " + error.localizedDescription)
+            }
+        }
+        return ""
+    }
+    
     @MainActor
     func purchaseProduct(with productId: String) async {
         guard let product = storeProducts.first(where: { $0.id == productId }) else {
@@ -104,12 +163,13 @@ class RootStore: ObservableObject {
         }
         do {
             let result = try await product.purchase()
-//            print("purchaseProduct result - \(result)")
+            print("purchaseProduct result - \(result)")
             switch result {
             case .success(let verification):
                 let transaction = try sk2Store.checkVerified(verification)
-//                print("purchase done - \(transaction)")
-                try await sk2Store.sendTransactionDetails(for: transaction, with: userId, using: apiKey)
+                print("purchase done - \(transaction)")
+                let receipt =  getReceipt();
+                try await sk2Store.sendTransactionDetails(for: transaction, with: userId, using: apiKey, receipt: receipt)
             
                 await updateCustomerProductStatus()
                 

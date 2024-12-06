@@ -20,19 +20,6 @@ public struct RootStoreView: View {
         _store = StateObject(wrappedValue: RootStore(userId: userId, apiKey: apiKey))
         
     }
-    private func showToastForLimitedTime() {
-        withAnimation {
-            showToast = true
-        }
-
-        Task {
-            try await Task.sleep(nanoseconds: 3 * 1_000_000_000) // 3 seconds
-            withAnimation {
-                showToast = false
-            }
-            store.errorMessage = nil
-        }
-    }
     
     public var body: some View {
         ZStack {
@@ -83,6 +70,20 @@ extension RootStoreView {
             }
         }
         .padding()
+    }
+    
+    private func showToastForLimitedTime() {
+        withAnimation {
+            showToast = true
+        }
+
+        Task {
+            try await Task.sleep(nanoseconds: 3 * 1_000_000_000) // 3 seconds
+            withAnimation {
+                showToast = false
+            }
+            store.errorMessage = nil
+        }
     }
     
 }

@@ -35,9 +35,9 @@ struct SKProductStore {
         products.sorted(by: {return $0.price < $1.price})
     }
 
-    func sendTransactionDetails(for transaction: Transaction, with userId: String, using apiKey: String) async throws {
+    func sendTransactionDetails(for transaction: Transaction, with userId: String, using apiKey: String, receipt: String) async throws {
         
-        let mappedTransaction = mapTransactionToDetails(for: transaction, with: userId);
+        let mappedTransaction = mapTransactionToDetails(for: transaction, with: userId, receipt: receipt);
         do{
             try await subscriptionPlanService.sendVerifiedCheck(transaction: mappedTransaction, apiKey: apiKey)
         } catch {
@@ -45,7 +45,7 @@ struct SKProductStore {
         }
     }
 
-    func mapTransactionToDetails(for transaction: Transaction, with userId: String) -> TransactionDetails {
+    func mapTransactionToDetails(for transaction: Transaction, with userId: String, receipt: String) -> TransactionDetails {
 
         return TransactionDetails(
                 userId: userId,
@@ -70,7 +70,8 @@ struct SKProductStore {
                 transactionId: String(transaction.id),
 //                transactionReason: transaction.reason.rawValue,
                 type: transaction.productType.rawValue,
-                webOrderLineItemId: transaction.webOrderLineItemID ?? ""
+                webOrderLineItemId: transaction.webOrderLineItemID ?? "",
+                receipt: receipt
             )
     }
     
