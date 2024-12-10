@@ -12,18 +12,14 @@ struct SKProductStore {
     let subscriptionPlanService = SubscriptionPlanService();
 
     func fetchProductsFromAppStore(for productIds: [String]) async throws -> [Product] {
-        print("fetchProductsFromAppStore = \(productIds)")
         if(productIds.isEmpty) {
             throw StoreError.noProducts
         }
         do {
-            print("fetchProductsFromAppStore = start")
             let allStoreProducts = try await Product.products(for: productIds)
             if allStoreProducts.count == 0 {
                 throw StoreError.noProductsInStore
             }
-            print("fetchProductsFromAppStore = end, \(allStoreProducts.count)=\(allStoreProducts)")
-            print("fetchProductsFromAppStore sorted = end, \(sortByPrice(allStoreProducts).count)")
             return sortByPrice(allStoreProducts)
         } catch {
             print("fetchProductsFromAppStore error = \(error)")
@@ -35,9 +31,9 @@ struct SKProductStore {
         products.sorted(by: {return $0.price < $1.price})
     }
 
-    func sendTransactionDetails(for transaction: Transaction, with userId: String, using apiKey: String, receipt: String) async throws {
+    func sendTransactionDetails(for transaction: Transaction, with userId: String, using apiKey: String) async throws {
         
-        let mappedTransaction = mapTransactionToDetails(for: transaction, with: userId, receipt: receipt);
+        let mappedTransaction = mapTransactionToDetails(for: transaction, with: userId);
         do{
             try await subscriptionPlanService.sendVerifiedCheck(transaction: mappedTransaction, apiKey: apiKey)
         } catch {
@@ -45,8 +41,34 @@ struct SKProductStore {
         }
     }
 
-    func mapTransactionToDetails(for transaction: Transaction, with userId: String, receipt: String) -> TransactionDetails {
-
+    func mapTransactionToDetails(for transaction: Transaction, with userId: String) -> TransactionDetails {
+/*
+ "userId" : [USER_LOGIN_ID],
+ "appAccountToken" : "3e2d5d0d-ab6c-1e13-307a-3802d7cdfc6a",
+ "bundleId" : "com.iap.sdk",
+ "currency" : "USD",
+ "deviceVerification" : "aCz1Ywhi6U2KeoT8nSOciDRX2htFQ9kBysBscye45XLu0HQYxTwZ0khsN54AamLd",
+ "deviceVerificationNonce" : "72a9600e-c3c5-4232-bc60-577f8bdf73ab",
+ "environment" : "Xcode",
+ "expiresDate" : 1765361352619,
+ "inAppOwnershipType" : "PURCHASED",
+ "isUpgraded" : false,
+ "originalPurchaseDate" : 1733727163880,
+ "originalTransactionId" : "1",
+ "price" : 990,
+ "productId" : "yearly_subscription",
+ "purchaseDate" : 1733825352619,
+ "quantity" : 1,
+ "signedDate" : 1733825352628,
+ "storefront" : "USA",
+ "storefrontId" : "143441",
+ "subscriptionGroupIdentifier" : "21585786",
+ "transactionId" : "2",
+ "transactionReason" : "PURCHASE",
+ "type" : "Auto-Renewable Subscription",
+ "webOrderLineItemId" : "2"
+ 
+ */
         return TransactionDetails(
                 userId: userId,
                 bundleId: transaction.appBundleID,
@@ -71,7 +93,7 @@ struct SKProductStore {
 //                transactionReason: transaction.reason.rawValue,
                 type: transaction.productType.rawValue,
                 webOrderLineItemId: transaction.webOrderLineItemID ?? "",
-                receipt: receipt
+                appAccountToken: transaction.appAccountToken ?? UUID()
             )
     }
     

@@ -18,6 +18,9 @@ struct StoreContent: View {
                     .font(.largeTitle.bold())
                     .multilineTextAlignment(.center)
                 Text(subscribed ?  "You are subscribed" : "A purchase is required to use this app")
+                if subscribed {
+                    cancelButton
+                }
                 Image(.coin)
                     .resizable()
                     .scaledToFit()
@@ -26,6 +29,24 @@ struct StoreContent: View {
                     .padding()
             }
             .padding(.vertical)
+        }
+    }
+}
+
+extension StoreContent {
+    private var cancelButton: some View {
+        Button(action: {
+            store.openSubscriptionSettings()
+        }) {
+            Text("Go To Subscriptions")
+                .font(.title3)
+                .fontWeight(.bold)
+                .foregroundColor(.white)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 12)
+                .background(.red)
+                .cornerRadius(10)
+                .shadow(color: .gray.opacity(0.4), radius: 4, x: 0, y: 2)
         }
     }
 }

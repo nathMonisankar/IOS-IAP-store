@@ -31,5 +31,5 @@ struct TransactionDetails: Codable {
 //    let transactionReason: String
     let type: String
     let webOrderLineItemId: String
-    let receipt: String
+    let appAccountToken: UUID
 }

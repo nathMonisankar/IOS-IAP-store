@@ -3,6 +3,7 @@
 import Foundation
 import StoreKit
 import SwiftUI
+import CryptoKit
 
 public enum StoreError: Error {
     case failedVerification
@@ -36,6 +37,20 @@ class RootStore: ObservableObject {
     let userId: String
     let apiKey: String
     
+    private var uuid : UUID {
+        let data = Data(userId.utf8)
+        let hash = SHA256.hash(data: data)
+        let hashBytes = Array(hash) 
+
+        return UUID(uuid: (
+            hashBytes[0], hashBytes[1], hashBytes[2], hashBytes[3],
+            hashBytes[4], hashBytes[5], hashBytes[6], hashBytes[7],
+            hashBytes[8], hashBytes[9], hashBytes[10], hashBytes[11],
+            hashBytes[12], hashBytes[13], hashBytes[14], hashBytes[15]
+        ))
+    }
+
+    
     init(userId: String, apiKey: String) {
         self.userId = userId
         self.apiKey = apiKey
@@ -61,7 +76,6 @@ class RootStore: ObservableObject {
     func fetchSubscriptionPlans(apiKey: String) async {
         do {
             self.apiSubscriptionPlans = try await subscriptionPlanService.loadSubscriptionPlans(apiKey: apiKey)
-            print("fetchSubscriptionPlans = \(apiSubscriptionPlans.count)")
             self.updateProductIds();
         } catch {
             self.errorMessage = "Failed to load subscription plans: \(error.localizedDescription)"
@@ -81,7 +95,6 @@ class RootStore: ObservableObject {
         do {
             let sk2Products = try await sk2Store.fetchProductsFromAppStore(for: productIds)
             storeProducts = sk2Products
-            print("fetchStoreProducts = \(sk2Products.count)")
             self.updateAvaiableProducts();
             self.isLoading = false
         } catch StoreError.noProductsInStore {
@@ -96,65 +109,6 @@ class RootStore: ObservableObject {
         }
     }
     
-//     func loadCertificate() -> Data? {
-//         let certificateName: String
-//         #if DEBUG
-//             certificateName = "StoreKitTestCertificate"
-//         #else
-//             certificateName = "AppleIncRootCertificate"
-//         #endif
-
-//         guard let certificatePath = Bundle.main.path(forResource: certificateName, ofType: "cer"),
-//               let certificateData = try? Data(contentsOf: URL(fileURLWithPath: certificatePath)) else {
-//             print("Certificate not found or cannot be loaded.")
-//             return nil
-//         }
-
-//         return certificateData
-//     }
-    
-//     func validateReceipt() {
-//         // Step 1: Load the receipt
-//         guard let receiptURL = Bundle.main.appStoreReceiptURL,
-//               let receiptData = try? Data(contentsOf: receiptURL) else {
-//             print("Receipt not available.")
-//             return
-//         }
-
-//         // Step 2: Load the certificate
-//         guard let certificateData = loadCertificate() else {
-//             print("Certificate not available.")
-//             return
-//         }
-
-//         // Step 3: Use the certificate to validate the receipt
-//         do {
-//             let receiptBase64 = receiptData.base64EncodedString()
-//             print("Receipt Base64: \(receiptBase64)")
-//             print("Certificate loaded for validation.")
-//             // Validation logic would typically involve sending the receipt and certificate to your server or validating locally
-// //            return receiptBase64
-//         } catch {
-//             print("Failed to validate receipt: \(error.localizedDescription)")
-//         }
-//     }
-    
-    func getReceipt() -> String {
-        if let appStoreReceiptURL = Bundle.main.appStoreReceiptURL,
-            FileManager.default.fileExists(atPath: appStoreReceiptURL.path) {
-            do {
-                let receiptData = try Data(contentsOf: appStoreReceiptURL, options: .alwaysMapped)
-                print(receiptData)
-                let receiptString = receiptData.base64EncodedString(options: [])
-                return receiptString
-            }
-            catch {
-                print("Couldn't read receipt data with error: " + error.localizedDescription)
-            }
-        }
-        return ""
-    }
-    
     @MainActor
     func purchaseProduct(with productId: String) async {
         guard let product = storeProducts.first(where: { $0.id == productId }) else {
@@ -162,14 +116,12 @@ class RootStore: ObservableObject {
             return
         }
         do {
-            let result = try await product.purchase()
-            print("purchaseProduct result - \(result)")
+            let result = try await product.purchase(options: [.appAccountToken(uuid)])
             switch result {
             case .success(let verification):
-                let transaction = try sk2Store.checkVerified(verification)
+                let transaction: Transaction = try sk2Store.checkVerified(verification)
                 print("purchase done - \(transaction)")
-                let receipt =  getReceipt();
-                try await sk2Store.sendTransactionDetails(for: transaction, with: userId, using: apiKey, receipt: receipt)
+                try await sk2Store.sendTransactionDetails(for: transaction, with: userId, using: apiKey)
             
                 await updateCustomerProductStatus()
                 
@@ -200,7 +152,6 @@ class RootStore: ObservableObject {
         for await result in Transaction.currentEntitlements {
             do{
                 let transaction = try sk2Store.checkVerified(result)
-                print("transaction currentEntitlements = \(transaction)")
                 guard let groupID = sk2Store.getSubscriptionGroupIdentifier(for: transaction, from: storeProducts) else {
                     continue // Skip transactions without a group ID
                 }
@@ -249,18 +200,13 @@ class RootStore: ObservableObject {
     }
     
     func listenForTransactions() -> Task<Void, Error> {
-        print("listenForTransactions")
         return Task.detached {
             for await result in Transaction.updates {
                 do {
                     let transaction = try result.payloadValue
-                    print("transaction details - \(transaction)")
-//                    await self.updateCustomerProductStatus()
-                    
                     await transaction.finish()
                 } catch {
-//                    self.errorMessage = "Transaction failed verification"
-                    print("Transaction failed verification")
+                   print("Transaction failed in listenForTransactions")
                 }
             }
         }
@@ -280,4 +226,12 @@ class RootStore: ObservableObject {
         return isProductPurchased(with: selectedPlan.productId)
     }
     
+    @MainActor
+    func openSubscriptionSettings() {
+        if let appStoreSubscriptionURL = URL(string: "https://apps.apple.com/account/subscriptions") {
+            UIApplication.shared.open(appStoreSubscriptionURL, options: [:], completionHandler: nil)
+        } else {
+            errorMessage = "Failed to open subscriptions."
+        }
+    }
 }
